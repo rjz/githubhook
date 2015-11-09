@@ -18,4 +18,12 @@ use `githubhook` to validate and parse its content:
     secret := []byte("don't tell!")
     hook, err := githubhook.Parse(secret, req)
 
+Plays nicely with the [google/go-github][gh-go-github] client!
+
+    evt := github.PullRequest{}
+    if err := json.Unmarshal(hook.Payload, &evt); err != nil {
+      fmt.Println("Invalid JSON?", err)
+    }
+
 [gh-webhook]: https://developer.github.com/webhooks/
+[gh-go-github]: https://github.com/google/go-github
