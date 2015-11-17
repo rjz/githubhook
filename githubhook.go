@@ -41,6 +41,10 @@ func verifySignature(secret []byte, signature string, body []byte) bool {
 func Parse(secret []byte, req *http.Request) (*Hook, error) {
 	hook := Hook{}
 
+	if !strings.EqualFold(req.Method, "POST") {
+		return nil, errors.New("Unknown method!")
+	}
+
 	if hook.Signature = req.Header.Get("x-hub-signature"); len(hook.Signature) == 0 {
 		return nil, errors.New("No signature!")
 	}
