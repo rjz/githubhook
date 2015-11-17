@@ -20,7 +20,7 @@ use `githubhook` to validate and parse its content:
 
 Plays nicely with the [google/go-github][gh-go-github] client!
 
-    evt := github.PullRequest{}
+    evt := github.PullRequestEvent{}
     if err := json.Unmarshal(hook.Payload, &evt); err != nil {
       fmt.Println("Invalid JSON?", err)
     }
