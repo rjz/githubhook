@@ -31,26 +31,31 @@ func signature(body string) string {
 	return "sha1=" + string(dst)
 }
 
-func TestMissingSignature(t *testing.T) {
+func TestNonPost(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/path", nil)
+	expectParseError(t, "Unknown method!", r)
+}
+
+func TestMissingSignature(t *testing.T) {
+	r, _ := http.NewRequest("POST", "/path", nil)
 	expectParseError(t, "No signature!", r)
 }
 
 func TestMissingEvent(t *testing.T) {
-	r, _ := http.NewRequest("GET", "/path", nil)
+	r, _ := http.NewRequest("POST", "/path", nil)
 	r.Header.Add("x-hub-signature", "bogus signature")
 	expectParseError(t, "No event!", r)
 }
 
 func TestMissingEventId(t *testing.T) {
-	r, _ := http.NewRequest("GET", "/path", nil)
+	r, _ := http.NewRequest("POST", "/path", nil)
 	r.Header.Add("x-hub-signature", "bogus signature")
 	r.Header.Add("x-github-event", "bogus event")
 	expectParseError(t, "No event Id!", r)
 }
 
 func TestInvalidSignature(t *testing.T) {
-	r, _ := http.NewRequest("GET", "/path", strings.NewReader("..."))
+	r, _ := http.NewRequest("POST", "/path", strings.NewReader("..."))
 	r.Header.Add("x-hub-signature", "bogus signature")
 	r.Header.Add("x-github-event", "bogus event")
 	r.Header.Add("x-github-delivery", "bogus id")
@@ -61,7 +66,7 @@ func TestValidSignature(t *testing.T) {
 
 	body := "{}"
 
-	r, _ := http.NewRequest("GET", "/path", strings.NewReader(body))
+	r, _ := http.NewRequest("POST", "/path", strings.NewReader(body))
 	r.Header.Add("x-hub-signature", signature(body))
 	r.Header.Add("x-github-event", "bogus event")
 	r.Header.Add("x-github-delivery", "bogus id")
