@@ -8,7 +8,7 @@ Installation
 -----------------------------------------------
 
 ```ShellSession
-$ go get github.com/rjz/githubhook
+$ go get gopkg.in/rjz/githubhook.v0
 ```
 
 Usage
