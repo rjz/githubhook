@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// Hook describes an inbound github webhook
 type Hook struct {
 	Signature string
 	Event     string
@@ -17,30 +18,30 @@ type Hook struct {
 	Payload   []byte
 }
 
+const signaturePrefix = "sha1="
+const signatureLength = 45 // len(SignaturePrefix) + len(hex(sha1))
+
 func signBody(secret, body []byte) []byte {
 	computed := hmac.New(sha1.New, secret)
 	computed.Write(body)
 	return []byte(computed.Sum(nil))
 }
 
-func verifySignature(secret []byte, signature string, body []byte) bool {
-
-	const signaturePrefix = "sha1="
-	const signatureLength = 45 // len(SignaturePrefix) + len(hex(sha1))
-
-	if len(signature) != signatureLength || !strings.HasPrefix(signature, signaturePrefix) {
+// SignedBy checks that the provided secret matches the hook Signature
+func (h *Hook) SignedBy(secret []byte) bool {
+	if len(h.Signature) != signatureLength || !strings.HasPrefix(h.Signature, signaturePrefix) {
 		return false
 	}
 
 	actual := make([]byte, 20)
-	hex.Decode(actual, []byte(signature[5:]))
+	hex.Decode(actual, []byte(h.Signature[5:]))
 
-	return hmac.Equal(signBody(secret, body), actual)
+	return hmac.Equal(signBody(secret, h.Payload), actual)
 }
 
-func Parse(secret []byte, req *http.Request) (*Hook, error) {
-	hook := Hook{}
-
+// New extracts a Hook from an incoming http.Request
+func New(req *http.Request) (hook *Hook, err error) {
+	hook = new(Hook)
 	if !strings.EqualFold(req.Method, "POST") {
 		return nil, errors.New("Unknown method!")
 	}
@@ -57,17 +58,15 @@ func Parse(secret []byte, req *http.Request) (*Hook, error) {
 		return nil, errors.New("No event Id!")
 	}
 
-	body, err := ioutil.ReadAll(req.Body)
+	hook.Payload, err = ioutil.ReadAll(req.Body)
+	return
+}
 
-	if err != nil {
-		return nil, err
+// Parse extracts and verifies a hook against a secret
+func Parse(secret []byte, req *http.Request) (hook *Hook, err error) {
+	hook, err = New(req)
+	if err == nil && !hook.SignedBy(secret) {
+		err = errors.New("Invalid signature")
 	}
-
-	if !verifySignature(secret, hook.Signature, body) {
-		return nil, errors.New("Invalid signature")
-	}
-
-	hook.Payload = body
-
-	return &hook, nil
+	return
 }

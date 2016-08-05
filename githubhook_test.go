@@ -18,6 +18,11 @@ func expectErrorMessage(t *testing.T, msg string, err error) {
 	}
 }
 
+func expectNewError(t *testing.T, msg string, r *http.Request) {
+	_, err := New(r)
+	expectErrorMessage(t, msg, err)
+}
+
 func expectParseError(t *testing.T, msg string, r *http.Request) {
 	_, err := Parse([]byte(testSecret), r)
 	expectErrorMessage(t, msg, err)
@@ -33,25 +38,25 @@ func signature(body string) string {
 
 func TestNonPost(t *testing.T) {
 	r, _ := http.NewRequest("GET", "/path", nil)
-	expectParseError(t, "Unknown method!", r)
+	expectNewError(t, "Unknown method!", r)
 }
 
 func TestMissingSignature(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/path", nil)
-	expectParseError(t, "No signature!", r)
+	expectNewError(t, "No signature!", r)
 }
 
 func TestMissingEvent(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/path", nil)
 	r.Header.Add("x-hub-signature", "bogus signature")
-	expectParseError(t, "No event!", r)
+	expectNewError(t, "No event!", r)
 }
 
 func TestMissingEventId(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/path", nil)
 	r.Header.Add("x-hub-signature", "bogus signature")
 	r.Header.Add("x-github-event", "bogus event")
-	expectParseError(t, "No event Id!", r)
+	expectNewError(t, "No event Id!", r)
 }
 
 func TestInvalidSignature(t *testing.T) {
