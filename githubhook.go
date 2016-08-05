@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -58,6 +59,11 @@ func (h *Hook) SignedBy(secret []byte) bool {
 	hex.Decode(actual, []byte(h.Signature[5:]))
 
 	return hmac.Equal(signBody(secret, h.Payload), actual)
+}
+
+// Extract unmarshals Payload into a destination interface.
+func (h *Hook) Extract(dst interface{}) error {
+	return json.Unmarshal(h.Payload, dst)
 }
 
 // New reads a Hook from an incoming HTTP Request.
