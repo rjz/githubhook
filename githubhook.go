@@ -1,3 +1,4 @@
+// Package githubhook implements handling and verification of github webhooks
 package githubhook
 
 import (
@@ -10,12 +11,29 @@ import (
 	"strings"
 )
 
-// Hook describes an inbound github webhook
+// Hook is an inbound github webhook
 type Hook struct {
+
+	// Id specifies the Id of a github webhook request.
+	//
+	// Id is extracted from the inbound request's `X-Github-Delivery` header.
+	Id string
+
+	// Event specifies the event name of a github webhook request.
+	//
+	// Event is extracted from the inbound request's `X-GitHub-Event` header.
+	// See: https://developer.github.com/webhooks/#events
+	Event string
+
+	// Signature specifies the signature of a github webhook request.
+	//
+	// Signature is extracted from the inbound request's `X-Hub-Signature` header.
 	Signature string
-	Event     string
-	Id        string
-	Payload   []byte
+
+	// Payload contains the raw contents of the webhook request.
+	//
+	// Payload is extracted from the JSON-formatted body of the inbound request.
+	Payload []byte
 }
 
 const signaturePrefix = "sha1="
@@ -28,6 +46,9 @@ func signBody(secret, body []byte) []byte {
 }
 
 // SignedBy checks that the provided secret matches the hook Signature
+//
+// Implements validation described in github's documentation:
+// https://developer.github.com/webhooks/securing/
 func (h *Hook) SignedBy(secret []byte) bool {
 	if len(h.Signature) != signatureLength || !strings.HasPrefix(h.Signature, signaturePrefix) {
 		return false
@@ -39,7 +60,7 @@ func (h *Hook) SignedBy(secret []byte) bool {
 	return hmac.Equal(signBody(secret, h.Payload), actual)
 }
 
-// New extracts a Hook from an incoming http.Request
+// New reads a Hook from an incoming HTTP Request.
 func New(req *http.Request) (hook *Hook, err error) {
 	hook = new(Hook)
 	if !strings.EqualFold(req.Method, "POST") {
@@ -62,7 +83,7 @@ func New(req *http.Request) (hook *Hook, err error) {
 	return
 }
 
-// Parse extracts and verifies a hook against a secret
+// Parse reads and verifies the hook in an inbound request.
 func Parse(secret []byte, req *http.Request) (hook *Hook, err error) {
 	hook, err = New(req)
 	if err == nil && !hook.SignedBy(secret) {
