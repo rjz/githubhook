@@ -6,6 +6,7 @@ be integrated with one.
 
 [![Build Status](https://travis-ci.org/rjz/githubhook.svg?branch=master)](https://travis-ci.org/rjz/githubhook)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rjz/githubhook)](https://goreportcard.com/report/github.com/rjz/githubhook)
+[![GoDoc](https://godoc.org/github.com/rjz/githubhook?status.svg)](https://godoc.org/github.com/rjz/githubhook)
 
 Installation
 -----------------------------------------------
