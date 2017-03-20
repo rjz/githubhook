@@ -2,6 +2,7 @@
 package githubhook
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
@@ -86,6 +87,8 @@ func New(req *http.Request) (hook *Hook, err error) {
 	}
 
 	hook.Payload, err = ioutil.ReadAll(req.Body)
+
+	req.Body = ioutil.NopCloser(bytes.NewBuffer(hook.Payload))
 	return
 }
 
