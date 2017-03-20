@@ -81,3 +81,21 @@ func TestValidSignature(t *testing.T) {
 		t.Error(fmt.Sprintf("Unexpected error '%s'", err))
 	}
 }
+
+func TestIdempotent(t *testing.T) {
+
+	body := "{}"
+
+	r, _ := http.NewRequest("POST", "/path", strings.NewReader(body))
+	r.Header.Add("x-hub-signature", signature(body))
+	r.Header.Add("x-github-event", "bogus event")
+	r.Header.Add("x-github-delivery", "bogus id")
+
+	if _, err := githubhook.Parse([]byte(testSecret), r); err != nil {
+		t.Error(fmt.Sprintf("Unexpected error '%s'", err))
+	}
+
+	if _, err := githubhook.Parse([]byte(testSecret), r); err != nil {
+		t.Error(fmt.Sprintf("Unexpected error '%s'", err))
+	}
+}
