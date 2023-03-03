@@ -1,3 +1,3 @@
 module github.com/rjz/githubhook
 
-go 1.4
+go 1.7

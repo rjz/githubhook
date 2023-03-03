@@ -1,11 +1,10 @@
-package githubhook_test
+package githubhook
 
 import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
-	"github.com/rjz/githubhook"
 	"net/http"
 	"strings"
 	"testing"
@@ -20,12 +19,12 @@ func expectErrorMessage(t *testing.T, msg string, err error) {
 }
 
 func expectNewError(t *testing.T, msg string, r *http.Request) {
-	_, err := githubhook.New(r)
+	_, err := New(r)
 	expectErrorMessage(t, msg, err)
 }
 
 func expectParseError(t *testing.T, msg string, r *http.Request) {
-	_, err := githubhook.Parse([]byte(testSecret), r)
+	_, err := Parse([]byte(testSecret), r)
 	expectErrorMessage(t, msg, err)
 }
 
@@ -77,7 +76,7 @@ func TestValidSignature(t *testing.T) {
 	r.Header.Add("x-github-event", "bogus event")
 	r.Header.Add("x-github-delivery", "bogus id")
 
-	if _, err := githubhook.Parse([]byte(testSecret), r); err != nil {
+	if _, err := Parse([]byte(testSecret), r); err != nil {
 		t.Error(fmt.Sprintf("Unexpected error '%s'", err))
 	}
 }
