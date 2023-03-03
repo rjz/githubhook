@@ -2,7 +2,7 @@ package githubhook
 
 import (
 	"crypto/hmac"
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"net/http"
@@ -29,11 +29,11 @@ func expectParseError(t *testing.T, msg string, r *http.Request) {
 }
 
 func signature(body string) string {
-	dst := make([]byte, 40)
-	computed := hmac.New(sha1.New, []byte(testSecret))
+	dst := make([]byte, sha256.Size*2)
+	computed := hmac.New(sha256.New, []byte(testSecret))
 	computed.Write([]byte(body))
 	hex.Encode(dst, computed.Sum(nil))
-	return "sha1=" + string(dst)
+	return signaturePrefix + string(dst)
 }
 
 func TestNonPost(t *testing.T) {
@@ -48,20 +48,20 @@ func TestMissingSignature(t *testing.T) {
 
 func TestMissingEvent(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/path", nil)
-	r.Header.Add("x-hub-signature", "bogus signature")
+	r.Header.Add("x-hub-signature-256", "bogus signature")
 	expectNewError(t, "No event!", r)
 }
 
 func TestMissingEventId(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/path", nil)
-	r.Header.Add("x-hub-signature", "bogus signature")
+	r.Header.Add("x-hub-signature-256", "bogus signature")
 	r.Header.Add("x-github-event", "bogus event")
 	expectNewError(t, "No event Id!", r)
 }
 
 func TestInvalidSignature(t *testing.T) {
 	r, _ := http.NewRequest("POST", "/path", strings.NewReader("..."))
-	r.Header.Add("x-hub-signature", "bogus signature")
+	r.Header.Add("x-hub-signature-256", "bogus signature")
 	r.Header.Add("x-github-event", "bogus event")
 	r.Header.Add("x-github-delivery", "bogus id")
 	expectParseError(t, "Invalid signature", r)
@@ -72,7 +72,7 @@ func TestValidSignature(t *testing.T) {
 	body := "{}"
 
 	r, _ := http.NewRequest("POST", "/path", strings.NewReader(body))
-	r.Header.Add("x-hub-signature", signature(body))
+	r.Header.Add("x-hub-signature-256", signature(body))
 	r.Header.Add("x-github-event", "bogus event")
 	r.Header.Add("x-github-delivery", "bogus id")
 
